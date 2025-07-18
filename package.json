@@ -1,0 +1,16 @@
+{
+  "name": "my-excel-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm run build",
+    "start": "cd client && npm run start",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install",
+    "install:all": "npm run install:client && npm run install:server"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

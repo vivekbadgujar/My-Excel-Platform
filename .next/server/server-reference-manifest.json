@@ -1,0 +1,17 @@
+{
+  "node": {
+    "40f5cc21aea4f62145167baaccc0cd99fef3a2f5df": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/ai/flows/generate-insights.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    }
+  },
+  "edge": {},
+  "encryptionKey": "s8Jy8d1KmZEXtr7bP9cCDZZpqeMqAzahtgwFD7jl0bs="
+}
