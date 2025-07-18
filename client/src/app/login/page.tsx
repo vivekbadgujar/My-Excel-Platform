@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import api from "@/lib/api";
 
 // Define the expected response structure
 interface AuthResponse {
@@ -27,14 +27,16 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      console.log("Login attempt to URL:", "http://localhost:5000/api/auth/login", { email, password });
-      const response = await axios.post<AuthResponse>("http://localhost:5000/api/auth/login", {
+      console.log("Login attempt with API configuration");
+      const response = await api.post<AuthResponse>("/auth/login", {
         email,
         password,
       });
       console.log("Login success:", response.data);
-      // Store token if needed
-      localStorage.setItem("token", response.data.token);
+      // Store token with consistent key
+      localStorage.setItem("authToken", response.data.token);
+      localStorage.setItem("email", response.data.email);
+      localStorage.setItem("role", response.data.role);
       router.push("/dashboard"); // Redirect to dashboard or home
     } catch (err: any) {
       console.error("Login error:", err);

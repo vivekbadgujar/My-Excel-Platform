@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { api } from "../lib/api";
 
 interface LoginData {
   email: string;
@@ -18,9 +18,9 @@ export default function Login() {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", loginData);
+      const response = await api.post("/auth/login", loginData);
       const data = response.data as { token: string; email: string; role: string; userId: string };
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("authToken", data.token);
       localStorage.setItem("email", data.email || "");
       localStorage.setItem("role", data.role || "");
       localStorage.setItem("userId", data.userId || "Not available");

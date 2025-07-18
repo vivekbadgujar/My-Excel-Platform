@@ -1,8 +1,16 @@
-// Since we're using static export, we need to directly call the external server
-// This is a backup configuration for when the Vercel routing doesn't work
+// Dynamic API configuration based on environment
+// In production on Vercel, API routes are available at /api/*
+// In development, we use the local server
 
-const SERVER_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-server-url.com' // Replace with your actual server URL
-  : 'http://localhost:5000';
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: Check if we're in production
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return `${window.location.origin}/api`;
+    }
+  }
+  // Development or server-side
+  return 'http://localhost:5000/api';
+};
 
-export const serverApi = `${SERVER_URL}/api`;
+export const api = getApiBaseUrl();

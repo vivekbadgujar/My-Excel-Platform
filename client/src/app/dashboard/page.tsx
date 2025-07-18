@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 import AnalyticsDashboard from "../../components/analytics-dashboard";
 import FileUploader from "../../components/file-uploader";
@@ -46,15 +46,13 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("authToken");
         if (!token) {
           console.log("No token, redirecting to login");
           router.push("/");
           return;
         }
-        const response = await axios.get("http://localhost:5000/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get("/auth/profile");
         const data = response.data as UserData;
         if (!data.userId) {
           data.userId = localStorage.getItem("userId") || "Not available";
@@ -73,7 +71,7 @@ export default function Dashboard() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
     localStorage.removeItem("userId");

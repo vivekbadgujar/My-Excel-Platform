@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
-import { AxiosError } from 'axios'; // Import AxiosError type
+import api from '@/lib/api';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -16,14 +15,14 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role: 'user' });
+      const response = await api.post('/auth/register', { name, email, password, role: 'user' });
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       let errorMessage = 'Signup failed';
-      if (err instanceof AxiosError) {
-        errorMessage = err.response?.data?.error || err.message || errorMessage;
-      } else if (err instanceof Error) {
-        errorMessage = err.message || errorMessage;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     }

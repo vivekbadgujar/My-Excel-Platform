@@ -6,6 +6,7 @@ import { UploadCloud, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
 
 type ParsedData = Record<string, string | number>[];
 
@@ -43,29 +44,22 @@ export default function FileUploader({ onDataUploaded }: FileUploaderProps) {
 
           const formData = new FormData();
           formData.append("file", file);
-          const token = localStorage.getItem("token");
+          const token = localStorage.getItem("authToken");
           console.log("Using token for upload:", token);
           if (!token) {
             throw new Error("No authentication token available.");
           }
 
-          const uploadResponse = await fetch("http://localhost:5000/api/upload", {
-            method: "POST",
+          // Use centralized API configuration with axios instance
+          const uploadResponse = await api.post('/upload', formData, {
             headers: {
+              'Content-Type': 'multipart/form-data',
               Authorization: `Bearer ${token}`,
             },
-            body: formData,
           });
 
-          console.log("Upload response status:", uploadResponse.status);
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
-          }
-
-          const uploadData = await uploadResponse.json();
-          console.log("Upload success response:", uploadData);
-          toast({ title: "File Uploaded", description: uploadData.message });
+          console.log("Upload success response:", uploadResponse.data);
+          toast({ title: "File Uploaded", description: uploadResponse.data.message });
           onDataUploaded(json, headers, file.name); // Already passing fileName
         } catch (error) {
           console.error("Upload or parsing error details:", error);
