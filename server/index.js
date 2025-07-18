@@ -24,9 +24,31 @@ app.use((req, res, next) => {
   next();
 });
 
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// MongoDB connection for serverless
+let isConnected = false;
+
+const connectToDatabase = async () => {
+  if (isConnected) {
+    return;
+  }
+  
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    isConnected = true;
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+};
 
 const UserSchema = new mongoose.Schema({
   email: String,
@@ -36,8 +58,18 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// Store verification codes temporarily
-const verificationCodes = {};
+// Schema for storing verification codes in database
+const VerificationCodeSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  code: { type: String, required: true },
+  expiry: { type: Date, required: true },
+  verified: { type: Boolean, default: false }
+});
+
+// Auto-delete expired codes
+VerificationCodeSchema.index({ expiry: 1 }, { expireAfterSeconds: 0 });
+
+const VerificationCode = mongoose.model('VerificationCode', VerificationCodeSchema);
 
 // Generate verification code
 const generateVerificationCode = () => {
@@ -113,6 +145,8 @@ app.get('/', (req, res) => {
 app.post('/api/auth/send-verification', async (req, res) => {
   const { email } = req.body;
   try {
+    await connectToDatabase();
+    
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -123,11 +157,16 @@ app.post('/api/auth/send-verification', async (req, res) => {
     const verificationCode = generateVerificationCode();
     const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Store verification code temporarily
-    verificationCodes[email] = {
-      code: verificationCode,
-      expiry: expiryTime
-    };
+    // Store verification code in database (upsert to handle duplicates)
+    await VerificationCode.findOneAndUpdate(
+      { email },
+      {
+        code: verificationCode,
+        expiry: expiryTime,
+        verified: false
+      },
+      { upsert: true, new: true }
+    );
 
     // Send verification email
     const emailSent = await sendVerificationEmail(email, verificationCode);
@@ -155,8 +194,10 @@ app.post('/api/auth/send-verification', async (req, res) => {
 app.post('/api/auth/verify-code', async (req, res) => {
   const { email, code } = req.body;
   try {
+    await connectToDatabase();
+    
     // Check if verification code exists and is valid
-    const storedData = verificationCodes[email];
+    const storedData = await VerificationCode.findOne({ email });
     if (!storedData) {
       return res.status(400).json({ message: 'No verification code found for this email' });
     }
@@ -166,12 +207,16 @@ app.post('/api/auth/verify-code', async (req, res) => {
     }
 
     if (new Date() > storedData.expiry) {
-      delete verificationCodes[email];
+      await VerificationCode.deleteOne({ email });
       return res.status(400).json({ message: 'Verification code has expired' });
     }
 
     // Mark as verified
-    verificationCodes[email].verified = true;
+    await VerificationCode.findOneAndUpdate(
+      { email },
+      { verified: true },
+      { new: true }
+    );
     
     res.json({ message: 'Email verified successfully' });
   } catch (err) {
@@ -183,13 +228,15 @@ app.post('/api/auth/verify-code', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, name, verificationCode } = req.body;
   try {
+    await connectToDatabase();
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Check if verification was completed
-    const storedData = verificationCodes[email];
+    const storedData = await VerificationCode.findOne({ email });
     if (!storedData || !storedData.verified) {
       return res.status(400).json({ message: 'Email not verified. Please verify your email first.' });
     }
@@ -200,7 +247,7 @@ app.post('/api/auth/register', async (req, res) => {
     console.log('User saved:', user);
     
     // Clean up verification code
-    delete verificationCodes[email];
+    await VerificationCode.deleteOne({ email });
     
     const token = jwt.sign({ userId: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ token, email: user.email, role: user.role });
@@ -213,6 +260,8 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
+    await connectToDatabase();
+    
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
