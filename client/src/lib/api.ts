@@ -2,19 +2,26 @@ import axios from 'axios';
 
 // Determine the API base URL based on environment
 const getApiBaseUrl = () => {
-  // Check if we're in production (deployed)
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    // In production, try the same domain first, then fallback to deployed server
-    return `${window.location.origin}/api`;
+  // Check if we're in browser environment
+  if (typeof window !== 'undefined') {
+    // In production (deployed), use the same domain
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return `${window.location.origin}/api`;
+    }
+    // In development, use localhost:5000
+    return 'http://localhost:5000/api';
   }
   
-  // In development, use localhost:5000
+  // Server-side fallback
   return 'http://localhost:5000/api';
 };
 
 // Create axios instance with proper configuration
+const baseURL = getApiBaseUrl();
+console.log('API Base URL:', baseURL); // Debug log
+
 const api = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
