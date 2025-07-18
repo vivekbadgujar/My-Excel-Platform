@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, CheckCircle, User } from "lucide-react";
+import api from "@/lib/api";
 
 type SignupStep = 'email' | 'verification' | 'password' | 'success';
 
@@ -27,7 +27,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/send-verification", {
+      const response = await api.post("/auth/send-verification", {
         email,
       });
       console.log("Verification code sent:", response.data);
@@ -53,7 +53,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/verify-code", {
+      const response = await api.post("/auth/verify-code", {
         email,
         code: verificationCode,
       });
@@ -91,7 +91,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", {
+      const response = await api.post("/auth/register", {
         email,
         password,
         name,

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
-import { AxiosError } from 'axios'; // Import AxiosError type
+import api from '@/lib/api';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -15,17 +14,17 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      localStorage.setItem('token', response.data.token);
+      const response = await api.post('/auth/login', { email, password });
+      localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('email', email);
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       let errorMessage = 'Login failed';
-      if (err instanceof AxiosError) {
-        errorMessage = err.response?.data?.error || err.message || errorMessage;
-      } else if (err instanceof Error) {
-        errorMessage = err.message || errorMessage;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     }
