@@ -4,13 +4,30 @@
   "private": true,
   "scripts": {
     "build": "cd client && npm run build",
+    "build:mobile": "cd client && npm run build && cd .. && npx cap sync",
+    "build:android": "node mobile-build.js",
     "start": "cd client && npm run start",
     "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
     "install:client": "cd client && npm install",
     "install:server": "cd server && npm install",
-    "install:all": "npm run install:client && npm run install:server"
+    "install:all": "npm run install:client && npm run install:server",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:run:android": "npx cap run android",
+    "cap:open:android": "npx cap open android"
   },
   "devDependencies": {
-    "concurrently": "^7.6.0"
+    "concurrently": "^7.6.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/cli": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/filesystem": "^7.1.2",
+    "@capacitor/network": "^7.0.1",
+    "@capacitor/share": "^7.0.1",
+    "@capacitor/splash-screen": "^7.0.1",
+    "@capacitor/status-bar": "^7.0.1"
   }
 }

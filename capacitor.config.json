@@ -1,5 +1,13 @@
 {
-  "appId": "com.example.app",
-  "appName": "server",
-  "webDir": "www"
+  "appId": "com.vivekbadgujar.myexcelplatform",
+  "appName": "My Excel Platform",
+  "webDir": "client/out",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
 }
