@@ -50,7 +50,22 @@ const connectToDatabase = async () => {
   }
 };
 
-const User = require('./models/User');
+const path = require('path');
+
+// Import User model with error handling for serverless environments
+let User;
+try {
+  User = require(path.join(__dirname, 'models', 'User'));
+} catch (error) {
+  console.error('Error importing User model:', error);
+  // Fallback to direct require
+  try {
+    User = require('./models/User');
+  } catch (fallbackError) {
+    console.error('Fallback User model import failed:', fallbackError);
+    throw new Error('Unable to import User model');
+  }
+}
 
 // Schema for storing verification codes in database
 const VerificationCodeSchema = new mongoose.Schema({
@@ -292,7 +307,13 @@ app.get('/api/auth/profile', async (req, res) => {
   }
 });
 
-const upload = multer({ dest: 'uploads/' });
+// Configure multer for serverless environment (use memory storage)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     console.log("Upload request received:", req.file); // Debug log
