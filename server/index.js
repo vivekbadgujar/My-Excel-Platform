@@ -50,13 +50,7 @@ const connectToDatabase = async () => {
   }
 };
 
-const UserSchema = new mongoose.Schema({
-  email: String,
-  password: String,
-  name: String,
-  role: { type: String, default: 'user' }
-});
-const User = mongoose.model('User', UserSchema);
+const User = require('./models/User');
 
 // Schema for storing verification codes in database
 const VerificationCodeSchema = new mongoose.Schema({
@@ -69,7 +63,7 @@ const VerificationCodeSchema = new mongoose.Schema({
 // Auto-delete expired codes
 VerificationCodeSchema.index({ expiry: 1 }, { expireAfterSeconds: 0 });
 
-const VerificationCode = mongoose.model('VerificationCode', VerificationCodeSchema);
+const VerificationCode = mongoose.models.VerificationCode || mongoose.model('VerificationCode', VerificationCodeSchema);
 
 // Generate verification code
 const generateVerificationCode = () => {
